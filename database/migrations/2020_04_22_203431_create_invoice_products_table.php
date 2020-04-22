@@ -14,7 +14,7 @@ class CreateInvoiceProductsTable extends Migration
     public function up()
     {
         Schema::create('invoice_products', function (Blueprint $table) {
-            $table->bigIncrements('id');
+            $table->Increments('id');
             $table->unsignedInteger('invoice_id');
             $table->unsignedInteger('product_id');
             $table->integer('quantity');
@@ -22,8 +22,8 @@ class CreateInvoiceProductsTable extends Migration
             $table->double('total_value');
             $table->timestamps();
 
-            $table->foreing('invoice_id')->references('id')->on('invoices')->onDelete('cascade');
-            $table->foreing('product_id')->references('id')->on('products')->onDelete('cascade');
+            $table->foreign('invoice_id')->references('id')->on('invoices')->onDelete('cascade');
+            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
             
         });
     }

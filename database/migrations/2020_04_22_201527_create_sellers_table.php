@@ -14,13 +14,13 @@ class CreateSellersTable extends Migration
     public function up()
     {
         Schema::create('sellers', function (Blueprint $table) {
-            $table->bigIncrements('id');
+            $table->Increments('id');
             $table->string('documentType');
-            $table->string('document');
+            $table->string('document')->unique();
             $table->string('name');
             $table->string('surname');
             $table->string('company');
-            $table->string('address');
+            $table->string('address')->unique();
             $table->string('mobile')->max('30');
             $table->timestamps();
         });
