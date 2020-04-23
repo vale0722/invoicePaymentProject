@@ -1,0 +1,26 @@
+.navbar {
+  box-shadow: 0 4px 18px 0 rgba(0, 0, 0, 0.12), 0 7px 10px -5px rgba(0, 0, 0, 0.15);
+  background: #ffffff;
+}
+
+.btn.btn-blue {
+  color: #ffffff;
+  background-color: #00bcd4;
+  border-color: #00bcd4;
+}
+
+.btn-fab {
+  font-size: 24px;
+  height: 41px;
+  min-width: 41px;
+  width: 41px;
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+  line-height: 41px;
+}
+
+.btn-round {
+  border-radius: 50%;
+}
+

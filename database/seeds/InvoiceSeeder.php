@@ -28,7 +28,7 @@ class InvoiceSeeder extends Seeder
                 $quantity = rand(1, 5);
                 $invoice->products()->attach($product->id, [
                     'quantity' => $quantity,
-                    'total_value' => $quantity + $product->price,
+                    'total_value' => $quantity * $product->price,
                     'unit_value' => $product->price,
                 ]);
             }

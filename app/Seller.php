@@ -10,4 +10,14 @@ class Seller extends Model
     {
         return $this->hasMany(Invoice::class);
     }
+
+    public function getFullNameAttribute()
+    {
+        return $this->name . ' ' . $this->surname;
+    }
+
+    public function getFullDocumentAttribute()
+    {
+        return $this->documentType . '. ' . $this->document;
+    }
 }
