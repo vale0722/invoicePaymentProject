@@ -20,6 +20,9 @@ class CreateSellersTable extends Migration
             $table->string('name');
             $table->string('surname');
             $table->string('company');
+            $table->string('country');
+            $table->string('department');
+            $table->string('city');
             $table->string('address')->unique();
             $table->string('mobile')->max('30');
             $table->timestamps();
