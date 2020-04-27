@@ -81,8 +81,6 @@ class InvoiceController extends Controller
         if (!$invoice->isPaid() && !$invoice->isPending() && !$invoice->isAnnulated()) {
             $invoice->title = $request->input('title');
             $invoice->reference = $request->input('reference');
-            $invoice->client_id = $request->input('client');
-            $invoice->seller_id = $request->input('seller');
             if ($request->input('stateReceipt') == '1') {
                 $now = new \DateTime();
                 $invoice->receipt_date = $now->format('Y-m-d H:i:s');
