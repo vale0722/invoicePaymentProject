@@ -3,6 +3,9 @@
 <div class="main main-raised">
     <div class="section">
         <div class="container">
+            <a href="{{ route('home') }}" class="btn btn-blue btn-raised btn-rab btn-round">
+                <i class="fas fa-undo"></i>
+            </a>
             <div class="title">
                 <h2 class="text-blue">
                     <i class="fas fa-plus-circle"></i> Creación de facturas

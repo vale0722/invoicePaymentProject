@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Invoice\Product;
+namespace App\Http\Requests\Invoice;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreRequest extends FormRequest
+class InvoiceAnnulateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,8 +24,7 @@ class StoreRequest extends FormRequest
     public function rules()
     {
         return [
-            'product' => 'required|exists:products,id',
-            'quantity' => 'required|min:1',
+            'reason' => 'required|min:3'
         ];
     }
 
@@ -37,9 +36,7 @@ class StoreRequest extends FormRequest
     public function customValidationMessages()
     {
         return [
-            'required' => "El :attribute es un campo obligatorio",
-            'exists' => 'El :attribute no exíste',
-            'between' => 'El :attribute debe tener como minimo :min caracteres'
+            'required' => "El :attribute es un campo obligadorio",
         ];
     }
     
@@ -51,8 +48,7 @@ class StoreRequest extends FormRequest
     public function customValidationAttributes()
     {
         return [
-            'product' => "Producto",
-            'quantity' => "Cantidad"
+            'reason' => "Motivo",
         ];
     }
 }

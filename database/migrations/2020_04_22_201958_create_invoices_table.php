@@ -24,6 +24,7 @@ class CreateInvoicesTable extends Migration
             $table->timestamp('receipt_date')->nullable();
             $table->timestamp('duedate')->nullable();
             $table->timestamp('payment_date')->nullable();
+            $table->string('annulate')->nullable();
             $table->unsignedInteger('client_id');
             $table->unsignedInteger('seller_id');
             $table->timestamps();

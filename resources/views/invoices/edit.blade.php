@@ -3,6 +3,9 @@
 <div class="main main-raised">
     <div class="section">
         <div class="container">
+            <a href="{{ route('home') }}" class="btn btn-blue btn-raised btn-rab btn-round">
+                <i class="fas fa-undo"></i>
+            </a>
             <div class="title">
                 <h2 class="text-blue">
                     <i class="fas fa-plus-circle"></i> Editando {{ $invoice->title }}
@@ -44,12 +47,12 @@
     </div>
     <div class="section section-invoice">
         <div class="container">
-                <h2 class="text-blue text-right">
-                    <a href="{{ route('invoice.product.create', $invoice) }}" 
-                        class="btn btn-blue btn-raised btn-rab btn-round">
-                        <i class="fas fa-cart-plus"></i>
-                    </a>
-                </h2>
+            <h2 class="text-blue text-right">
+                <a href="{{ route('invoice.product.create', $invoice) }}"
+                    class="btn btn-blue btn-raised btn-rab btn-round">
+                    <i class="fas fa-cart-plus"></i>
+                </a>
+            </h2>
             <div class="card">
                 <div class="card-body">
                     <table class="table table-hover">

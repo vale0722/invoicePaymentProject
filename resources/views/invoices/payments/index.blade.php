@@ -49,7 +49,7 @@
                                 <th>{{ $payment->message }}</th>
                                 <th>{{ $payment->updated_at }}</th>
                                 <th>
-                                    @if($payment->isPending())
+                                    @if($payment->isPending() && !$invoice->isAnnulated())
                                     <a href="{{ route('payment.show', $payment)}}" class="text-success"><i
                                             class="far fa-eye"></i> Continuar</a></th>
                                 @endif

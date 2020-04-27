@@ -38,3 +38,11 @@ body{
     padding-left: 0.4rem;
     padding-right: 0.4rem;
 }
+.button-transp{
+        background-color: Transparent;
+        background-repeat:no-repeat;
+        border: none;
+        cursor:pointer;
+        overflow: hidden;
+        outline:none;
+}

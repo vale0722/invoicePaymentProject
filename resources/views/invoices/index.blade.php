@@ -12,6 +12,11 @@
                 @endforeach
             </div>
             @endif
+            @if(session()->has('success'))
+            <div class="alert alert-success" id="divSuccess">
+                {{session()->get('success')}}
+            </div>
+            @endif
             <div class="title">
                 <h2 class="text-blue">
                     Facturas Generadas <i class="fas fa-file-invoice-dollar"></i>
@@ -44,8 +49,10 @@
                                 <th>{{ $invoice->seller->fullName }}</th>
                                 <th>{{ '$'. number_format($invoice->total) }}</th>
                                 <th>
-                                    @if($invoice->isApproved())
+                                    @if($invoice->isPaid())
                                     <span class="badge badge-success">Pagada</span>
+                                    @elseif($invoice->isAnnulated())
+                                    <span class="badge badge-danger">Anulada</span>
                                     @elseif($invoice->isExpired())
                                     <span class="badge badge-danger">Vencida</span>
                                     @elseif($invoice->isPending())
@@ -57,13 +64,29 @@
                                 <th nowrap>{{ $invoice->created_at }}</th>
                                 <th>
                                     <div class="btn-group">
-                                        <a href="{{ route('invoice.show', $invoice)}}" class="text-success">
+                                        <a href="{{ route('invoice.show', $invoice)}}"
+                                            class="btn button-transp text-success">
                                             <i class="far fa-eye"></i>
                                         </a>
-                                        @if(!$invoice->isApproved() && !$invoice->isPending())
+                                        @if(!$invoice->isPaid() && !$invoice->isPending() && !$invoice->isAnnulated())
                                         <div>
-                                            <a href="{{ route('invoice.edit', $invoice)}}" class="text-warning">
-                                                . <i class="far fa-edit"></i>
+                                            <a href="{{ route('invoice.edit', $invoice)}}"
+                                                class=" btn button-transp text-warning">
+                                                <i class="far fa-edit"></i>
+                                            </a>
+                                        </div>
+                                        <div>
+                                            <a href="{{ route('invoice.annulate.view', $invoice)}}"
+                                                class=" btn button-transp text-danger">
+                                                <i class="fas fa-ban"></i>
+                                            </a>
+                                        </div>
+                                        @endif 
+                                        @if($invoice->isAnnulated())
+                                        <div>
+                                            <a href="{{ route('invoice.annulate.cancel', $invoice)}}"
+                                                class=" btn button-transp text-danger">
+                                                <i class="fas fa-undo"></i> Cancelar anulación
                                             </a>
                                         </div>
                                         @endif

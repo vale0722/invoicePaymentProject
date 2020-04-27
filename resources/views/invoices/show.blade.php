@@ -19,8 +19,9 @@
             </div>
             @endif
             <a class="btn btn-primary" href="{{ route('payment.index', $invoice) }}"><i class="far fa-eye"></i> Ver
-                intentos de pago </a>
-            @if(!$invoice->isApproved())
+                intentos de pago
+            </a>
+            @if(!$invoice->isPaid() && !$invoice->isAnnulated())
             <button type="button" class="btn btn-success" data-toggle="modal" data-target="#create">
                 Realiza el pago de la factura
             </button>
@@ -64,8 +65,10 @@
                     <div class="section">
                         <div class="container">
                             <h5 class="card-title"><b>{{ $invoice->title }}</b></h5>
-                            @if($invoice->isApproved())
+                            @if($invoice->isPaid())
                             <span class="badge badge-success">Pagada</span>
+                            @elseif($invoice->isAnnulated())
+                            <span class="badge badge-danger">Anulada</span>
                             @elseif($invoice->isExpired())
                             <span class="badge badge-danger">Vencida</span>
                             @elseif($invoice->isPending())
