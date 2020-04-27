@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
 class CreatePaymentsTable extends Migration
 {
@@ -15,13 +15,13 @@ class CreatePaymentsTable extends Migration
     {
         Schema::create('payments', function (Blueprint $table) {
             $table->Increments('id');
-            $table->string('reference', 32);
             $table->unsignedInteger('invoice_id');
-            $table->double('amount');
             $table->string('status')->nullable();
+            $table->string('reason')->nullable();
+            $table->string('message')->nullable();
             $table->string('request_id')->nullable()->unique();
             $table->string('processUrl')->nullable()->unique();
-            $table->timestamp('playment_date')->nullable();
+            $table->timestamp('payment_date')->nullable();
             $table->timestamps();
 
             $table->foreign('invoice_id')->references('id')->on('invoices')->onDelete('cascade');

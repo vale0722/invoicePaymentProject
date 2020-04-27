@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Actions\StatusAction;
 use Illuminate\Database\Eloquent\Model;
 
 class Invoice extends Model
@@ -45,5 +46,25 @@ class Invoice extends Model
         $subtotal = $this->subtotal;
         $vat = $this->vat;
         return $subtotal + $vat;
+    }
+
+    public function isApproved()
+    {
+        return ($this->state == StatusAction::APPROVED());
+    }
+
+    public function isPending()
+    {
+        return ($this->state == StatusAction::PENDING() ||
+        $this->state == StatusAction::PENDING_VALIDATION ||
+        $this->state == StatusAction::PARTIAL_EXPIRED || 
+        $this->state == StatusAction::OK);
+    }
+
+    public function isExpired()
+    {
+        $now = new \DateTime();
+        $now = $now->format('Y-m-d H:i:s');
+        return($this->duedate <= $now);
     }
 }
