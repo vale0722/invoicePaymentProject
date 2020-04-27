@@ -29,8 +29,6 @@ class InvoiceUpdateRequest extends FormRequest
             Rule::unique('invoices')->ignoreModel($this->route('invoice'))
             ],
             'title' => 'required|min:3|max:100',
-            'client' => 'required|numeric|exists:clients,id',
-            'seller' => 'required|numeric|exists:sellers,id',
             'stateReceipt' => 'required',
         ];
     }

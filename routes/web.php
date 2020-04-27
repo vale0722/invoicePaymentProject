@@ -17,9 +17,9 @@ Route::get('invoice/{invoice}', 'InvoiceController@show')->name('invoice.show');
 Route::post('/invoice/create', 'InvoiceController@store')->name('invoice.store');
 Route::get('/invoice/edit/{invoice}', 'InvoiceController@edit')->name('invoice.edit');
 Route::put('/invoice/edit/{invoice}', 'InvoiceController@update')->name('invoice.update');
-Route::post('/invoice/annulated/{invoice}', 'InvoiceController@annulate')->name('invoice.annulate');
-Route::get('/invoice/annulated/{invoice}', 'InvoiceController@annulateView')->name('invoice.annulate.view');
-Route::get('/invoice/annulated/cancel/{invoice}', 'InvoiceController@annulateCancel')->name('invoice.annulate.cancel');
+Route::post('/invoice/annul/{invoice}', 'InvoiceController@annulate')->name('invoice.annulate');
+Route::get('/invoice/annul/{invoice}', 'InvoiceController@annulateView')->name('invoice.annulate.view');
+Route::get('/invoice/annul/cancel/{invoice}', 'InvoiceController@annulateCancel')->name('invoice.annulate.cancel');
 
 Route::get('/invoice/{invoice}/product/create', 'InvoiceProductController@create')
         ->name('invoice.product.create');
