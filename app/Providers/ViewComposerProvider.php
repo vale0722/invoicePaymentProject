@@ -29,11 +29,6 @@ class ViewComposerProvider extends ServiceProvider
     public function boot()
     {
         View::composer(
-            'invoices.index',
-            CachedInvoices::class
-        );
-
-        View::composer(
             'invoices.create',
             CachedClientList::class
         );

@@ -36,14 +36,16 @@ class PaymentController extends Controller
     {
         if ($invoice->total == 0) {
             Log::info('Tried to pay an invoice without products', [
+                'invoice' => $invoice->id,
                 'ipAddress' => $request->ip(),
                 'userAgent' => $request->header('User-Agent'),
                 'date' => date('c'),
                 ]);
             return redirect()->route('invoice.show', $invoice)
                 ->withError('La factura debe tener por lo menos un producto');
-        } elseif ($invoice->isApproved()) {
-            Log::info('Tried to pay an paid invoice', [
+        } elseif ($invoice->isPaid() || $invoice->isAnnulated()) {
+            Log::info('Tried to pay an paid or annuled invoice', [
+                'invoice' => $invoice->id,
                 'ipAddress' => $request->ip(),
                 'userAgent' => $request->header('User-Agent'),
                 'date' => date('c'),
@@ -81,23 +83,12 @@ class PaymentController extends Controller
 
         $response = $placetopay->request($requestPayment);
         if ($response->isSuccessful()) {
-            $payment = Payment::where('id', $payment->id)->first();
-            $payment->status = $response->status()->status();
-            $payment->setReason($response->status()->status());
-            $payment->message = $response->status()->message();
-            $invoice->state = $payment->reason;
-            $payment->request_id = $response->requestId();
-            $payment->processUrl = $response->processUrl();
-            $payment->update();
-            $invoice->update();
-            Log::alert('PlacetoPay Redirect', [
-                'ipAddress' => $request->ip(),
-                'userAgent' => $request->header('User-Agent'),
-                'date' => date('c'),
-                ]);
+            $this->redirection($request, $response, $payment, $invoice);
             return redirect($response->processUrl());
         } else {
             Log::alert($response->status()->message(), [
+                'invoice' => $invoice->id,
+                'payment' => $payment->id,
                 'ipAddress' => $request->ip(),
                 'userAgent' => $request->header('User-Agent'),
                 'date' => date('c'),
@@ -138,6 +129,8 @@ class PaymentController extends Controller
             $invoice->update();
         }
         Log::alert('Payment attempt was updated', [
+            'invoice' => $payment->invoice->id,
+            'payment' => $payment->id,
             'ipAddress' => $request->ip(),
             'userAgent' => $request->header('User-Agent'),
             'date' => date('c'),
@@ -146,40 +139,67 @@ class PaymentController extends Controller
     }
 
     /**
-     * continue paying an invoice 
-     * 
+     * continue paying an invoice
+     *
      * @param Payment $payment
      * @param PlacetoPay $placetopay
      */
     public function show(Request $request, Payment $payment, PlacetoPay $placetopay)
     {
-        if ($payment->isPending()) {
-            $response = $placetopay->query($payment->request_id);
-            $requestPayment = $placetopay->request($response->request);
-            if ($requestPayment->isSuccessful()) {
-                $payment = Payment::where('id', $payment->id)->first();
-                $payment->status = $requestPayment->status()->status();
-                $payment->setReason($requestPayment->status()->status());
-                $payment->message = $requestPayment->status()->message();
-                $payment->invoice->state = $payment->reason;
-                $payment->request_id = $requestPayment->requestId();
-                $payment->processUrl = $requestPayment->processUrl();
-                $payment->update();
-                $payment->invoice->update();
-                Log::alert('PlacetoPay Redirect', [
-                    'ipAddress' => $request->ip(),
-                    'userAgent' => $request->header('User-Agent'),
-                    'date' => date('c'),
-                    ]);
-                return redirect($requestPayment->processUrl());
+        if ($payment->isPending() && !$payment->invoice->isAnnulated()) {
+            $requestPayment = $placetopay->query($payment->request_id);
+            $response = $placetopay->request($requestPayment->request);
+            if ($response->isSuccessful()) {
+                $this->redirection($request, $response, $payment, $payment->invoice);
+                return redirect($response->processUrl());
             } else {
                 Log::alert($response->status()->message(), [
+                    'invoice' => $payment->invoice->id,
+                    'payment' => $payment->id,
                     'ipAddress' => $request->ip(),
                     'userAgent' => $request->header('User-Agent'),
                     'date' => date('c'),
                     ]);
                 return redirect()->route('payment.index', $payment->invoice)->withError($response->status()->message());
             }
+        } else {
+            Log::info('El intento de pago no está en proceso o la factura está anulada', [
+                'invoice' => $payment->invoice->id,
+                'payment' => $payment->id,
+                'ipAddress' => $request->ip(),
+                'userAgent' => $request->header('User-Agent'),
+                'date' => date('c'),
+                ]);
+            return redirect()->route('payment.index', $payment->invoice)
+                ->withError('El intento de pago no está en proceso o la factura está anulada');
         }
+    }
+
+    /**
+     * Before redirection with placetopay,
+     * data update
+     *
+     * @param $requestPayment
+     * @param Payment $payment
+     * @param Invoice $invoice
+     */
+    public function redirection($request, $requestPayment, Payment $payment, Invoice $invoice)
+    {
+        $payment = Payment::where('id', $payment->id)->first();
+        $payment->status = $requestPayment->status()->status();
+        $payment->setReason($requestPayment->status()->status());
+        $payment->message = $requestPayment->status()->message();
+        $payment->invoice->state = $payment->reason;
+        $payment->request_id = $requestPayment->requestId();
+        $payment->processUrl = $requestPayment->processUrl();
+        $payment->update();
+        $payment->invoice->update();
+        Log::alert('PlacetoPay Redirect', [
+            'invoice' => $invoice->id,
+            'payment' => $payment->id,
+            'ipAddress' => $request->ip(),
+            'userAgent' => $request->header('User-Agent'),
+            'date' => date('c'),
+            ]);
     }
 }
