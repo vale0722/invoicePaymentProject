@@ -2,7 +2,7 @@
 
 use App\Invoice;
 use Faker\Generator as Faker;
-use App\Actions\StatusAction;
+use App\Constans\InvoicesStatuses;
 
 $factory->define(Invoice::class, function (Faker $faker) {
     $now = new \DateTime();
@@ -13,7 +13,7 @@ $factory->define(Invoice::class, function (Faker $faker) {
         'client_id' => 1,
         'seller_id' => 1,
         'reference' => $faker->unique()->numerify('F####'),
-        'state' => StatusAction::BDEFAULT(),
+        'state' => InvoicesStatuses::BDEFAULT(),
         'duedate' => date('Y-m-d H:i:s', strtotime('+ 30 days', strtotime($now))),
     ];
 });

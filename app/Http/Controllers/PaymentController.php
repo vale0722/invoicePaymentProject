@@ -18,9 +18,9 @@ class PaymentController extends Controller
     public function index(Request $request, Invoice $invoice)
     {
         Log::info('Someone has Logged in to view payment history', [
+            'invoice' => $invoice->id,
             'ipAddress' => $request->ip(),
             'userAgent' => $request->header('User-Agent'),
-            'date' => date('c'),
             ]);
         return view("invoices.payments.index", compact('invoice'));
     }
@@ -41,17 +41,16 @@ class PaymentController extends Controller
                 'userAgent' => $request->header('User-Agent'),
                 'date' => date('c'),
                 ]);
-            return redirect()->route('invoice.show', $invoice)
-                ->withError('La factura debe tener por lo menos un producto');
-        } elseif ($invoice->isPaid() || $invoice->isAnnulated()) {
+            return redirect()->route('invoice.show', $invoice);
+        }
+        if ($invoice->isPaid() || $invoice->isAnnulated()) {
             Log::info('Tried to pay an paid or annuled invoice', [
                 'invoice' => $invoice->id,
                 'ipAddress' => $request->ip(),
                 'userAgent' => $request->header('User-Agent'),
                 'date' => date('c'),
                 ]);
-            return redirect()->route('invoice.show', $invoice)
-                ->withError('La factura ya está pagada');
+            return redirect()->route('invoice.show', $invoice);
         }
 
         $payment = Payment::create(['invoice_id' => $invoice->id]);
@@ -83,18 +82,17 @@ class PaymentController extends Controller
 
         $response = $placetopay->request($requestPayment);
         if ($response->isSuccessful()) {
-            $this->redirection($request, $response, $payment, $invoice);
+            $this->updateData($request, $response, $payment, $invoice);
             return redirect($response->processUrl());
-        } else {
-            Log::alert($response->status()->message(), [
+        }
+        Log::info($response->status()->message(), [
                 'invoice' => $invoice->id,
                 'payment' => $payment->id,
                 'ipAddress' => $request->ip(),
                 'userAgent' => $request->header('User-Agent'),
-                'date' => date('c'),
                 ]);
-            return redirect()->route('invoice.show', $invoice)->withError($response->status()->message());
-        }
+        return redirect()->route('invoice.show', $invoice)
+            ->withError($response->status()->message());
     }
 
     /**
@@ -111,11 +109,15 @@ class PaymentController extends Controller
         $payment->setReason($response->status()->status());
         $payment->message = $response->status()->message();
         $payment->update();
-        $invoice = Invoice::where('id', $payment->invoice_id)->first();
+
+        $invoice = $payment->invoice;
+        $invoice->state = $payment->reason;
         if ($response->isSuccessful()) {
-            $invoice->state = $payment->reason;
             if ($response->status()->isApproved()) {
-                $date = date("Y-m-d H:i:s", strtotime($response->status()->date()));
+                $date = date(
+                    "Y-m-d H:i:s",
+                    strtotime($response->status()->date())
+                );
                 if ($invoice->receipt_date == null) {
                     $invoice->receipt_date = $date;
                 }
@@ -123,19 +125,18 @@ class PaymentController extends Controller
                 $payment->payment_date = $date;
                 $payment->update();
             }
-            $invoice->update();
-        } else {
-            $invoice->state = $payment->reason;
-            $invoice->update();
         }
+        $invoice->update();
         Log::alert('Payment attempt was updated', [
             'invoice' => $payment->invoice->id,
             'payment' => $payment->id,
             'ipAddress' => $request->ip(),
             'userAgent' => $request->header('User-Agent'),
-            'date' => date('c'),
             ]);
-        return view("invoices.payments.index", compact('invoice'))->with('success', 'Proceso finalizado');
+        return view(
+            "invoices.payments.index",
+            compact('invoice')
+        )->with('success', 'Proceso finalizado');
     }
 
     /**
@@ -146,33 +147,30 @@ class PaymentController extends Controller
      */
     public function show(Request $request, Payment $payment, PlacetoPay $placetopay)
     {
-        if ($payment->isPending() && !$payment->invoice->isAnnulated()) {
-            $requestPayment = $placetopay->query($payment->request_id);
-            $response = $placetopay->request($requestPayment->request);
-            if ($response->isSuccessful()) {
-                $this->redirection($request, $response, $payment, $payment->invoice);
-                return redirect($response->processUrl());
-            } else {
-                Log::alert($response->status()->message(), [
-                    'invoice' => $payment->invoice->id,
-                    'payment' => $payment->id,
-                    'ipAddress' => $request->ip(),
-                    'userAgent' => $request->header('User-Agent'),
-                    'date' => date('c'),
-                    ]);
-                return redirect()->route('payment.index', $payment->invoice)->withError($response->status()->message());
-            }
-        } else {
+        if (!$payment->isPending() || $payment->invoice->isAnnulated) {
             Log::info('El intento de pago no está en proceso o la factura está anulada', [
                 'invoice' => $payment->invoice->id,
                 'payment' => $payment->id,
                 'ipAddress' => $request->ip(),
                 'userAgent' => $request->header('User-Agent'),
-                'date' => date('c'),
                 ]);
             return redirect()->route('payment.index', $payment->invoice)
                 ->withError('El intento de pago no está en proceso o la factura está anulada');
         }
+        $requestPayment = $placetopay->query($payment->request_id);
+        $response = $placetopay->request($requestPayment->request);
+        if ($response->isSuccessful()) {
+            $this->updateData($request, $response, $payment, $payment->invoice);
+            return redirect($response->processUrl());
+        }
+        Log::alert($response->status()->message(), [
+                    'invoice' => $payment->invoice->id,
+                    'payment' => $payment->id,
+                    'ipAddress' => $request->ip(),
+                    'userAgent' => $request->header('User-Agent'),
+                    ]);
+        return redirect()->route('payment.index', $payment->invoice)
+            ->withError($response->status()->message());
     }
 
     /**
@@ -183,7 +181,7 @@ class PaymentController extends Controller
      * @param Payment $payment
      * @param Invoice $invoice
      */
-    public function redirection($request, $requestPayment, Payment $payment, Invoice $invoice)
+    private function updateData($request, $requestPayment, Payment $payment, Invoice $invoice)
     {
         $payment = Payment::where('id', $payment->id)->first();
         $payment->status = $requestPayment->status()->status();
@@ -194,12 +192,11 @@ class PaymentController extends Controller
         $payment->processUrl = $requestPayment->processUrl();
         $payment->update();
         $payment->invoice->update();
-        Log::alert('PlacetoPay Redirect', [
+        Log::info('PlacetoPay Redirect', [
             'invoice' => $invoice->id,
             'payment' => $payment->id,
             'ipAddress' => $request->ip(),
             'userAgent' => $request->header('User-Agent'),
-            'date' => date('c'),
             ]);
     }
 }

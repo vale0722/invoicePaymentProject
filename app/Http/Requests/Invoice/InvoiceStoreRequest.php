@@ -27,7 +27,9 @@ class InvoiceStoreRequest extends FormRequest
             'reference' => 'required|unique:invoices',
             'title' => 'required|min:3|max:100',
             'client' => 'required|numeric|exists:clients,id',
-            'seller' => 'required|numeric|exists:sellers,id'
+            'seller' => 'required|numeric|exists:sellers,id',
+            'product' => 'required|exists:products,id',
+            'quantity' => 'required|min:1',
         ];
     }
 
@@ -41,7 +43,8 @@ class InvoiceStoreRequest extends FormRequest
         return [
             'required' => "El :attribute de la factura es un campo obligadorio",
             'reference.unique' => "La :attribute de la factura ya exíste",
-            'exists' => 'El :attribute no exíste'
+            'exists' => 'El :attribute no exíste',
+            'between' => 'El :attribute debe tener como minimo :min caracteres'
         ];
     }
     
@@ -56,7 +59,9 @@ class InvoiceStoreRequest extends FormRequest
             'reference' => "Referencia",
             'title' => "Titulo",
             'client' => 'Cliente',
-            'seller' => 'Vendedor'
+            'seller' => 'Vendedor',
+            'product' => "Producto",
+            'quantity' => "Cantidad"
         ];
     }
 }

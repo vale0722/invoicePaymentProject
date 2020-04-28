@@ -2,7 +2,7 @@
 
 namespace App;
 
-use App\Actions\StatusAction;
+use App\Constans\InvoicesStatuses;
 use Illuminate\Database\Eloquent\Model;
 
 class Invoice extends Model
@@ -53,7 +53,7 @@ class Invoice extends Model
      */
     public function isPaid()
     {
-        return ($this->state == StatusAction::APPROVED());
+        return ($this->state == InvoicesStatuses::APPROVED());
     }
 
     
@@ -62,11 +62,11 @@ class Invoice extends Model
      */
     public function isPending()
     {
-        return ($this->state == StatusAction::PENDING() ||
-        $this->state == StatusAction::PENDING_VALIDATION ||
-        $this->state == StatusAction::PARTIAL_EXPIRED ||
-        $this->state == StatusAction::OK);
-    }
+        return ($this->state == InvoicesStatuses::PENDING() ||
+        $this->state == InvoicesStatuses::PENDING_VALIDATION ||
+        $this->state == InvoicesStatuses::PARTIAL_EXPIRED ||
+        $this->state == InvoicesStatuses::OK);
+    }   
 
     /**
      * Determine if the invoice is overdue

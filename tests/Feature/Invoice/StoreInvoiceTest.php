@@ -29,11 +29,14 @@ class StoreInvoiceTest extends TestCase
     {
         $client = factory(Client::class)->create();
         $seller = factory(Seller::class)->create();
+        $product = factory(Product::class)->create();
         $this->post(route('invoice.store'), [
             'reference' => '#RT',
             'title' => 'Invoice test',
             'client' => $client->id,
-            'seller' => $seller->id
+            'seller' => $seller->id,
+            'product' => $product->id,
+            'quantity' => '3'
         ])
         ->assertRedirect()
         ->assertSessionHasNoErrors();

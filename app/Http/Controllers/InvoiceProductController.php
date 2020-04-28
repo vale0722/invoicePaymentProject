@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Invoice;
 use App\Product;
 use Illuminate\Http\Request;
-use App\Actions\StatusAction;
 use App\Http\Requests\Invoice\Product\StoreRequest;
 
 class InvoiceProductController extends Controller
@@ -16,7 +15,8 @@ class InvoiceProductController extends Controller
     */
     public function create(Invoice $invoice)
     {
-        return view('invoices.products.create', compact('invoice'));
+        $products = Product::getCachedProductsList();
+        return view('invoices.products.create', compact('invoice', 'products'));
     }
 
     /**
