@@ -38,7 +38,7 @@ you should also install **node.js** and run this command:
 
 ```bash
 $ npm install
-$ npm run
+$ npm run dev
 ```
 
 ## THANK YOU
