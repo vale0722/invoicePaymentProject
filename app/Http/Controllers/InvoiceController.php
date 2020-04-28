@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Client;
+use App\Seller;
 use App\Invoice;
+use App\Product;
 use Illuminate\Http\Request;
-use App\Actions\StatusAction;
+use App\Constans\InvoicesStatuses;
 use Illuminate\Support\Facades\Log;
 use App\Http\Requests\Invoice\InvoiceStoreRequest;
 use App\Http\Requests\Invoice\InvoiceUpdateRequest;
@@ -17,6 +20,7 @@ class InvoiceController extends Controller
      */
     public function index()
     {
+        
         $invoices = Invoice::all();
         return view('invoices.index', compact('invoices'));
     }
@@ -36,7 +40,10 @@ class InvoiceController extends Controller
     */
     public function create()
     {
-        return view('invoices.create');
+        $clients = Client::getCachedClientList();
+        $sellers = Seller::getCachedSellerList();
+        $products = Product::getCachedProductsList();
+        return view('invoices.create', compact('clients', 'sellers', 'products'));
     }
 
     /**
@@ -51,9 +58,18 @@ class InvoiceController extends Controller
         $invoice->reference = $request->input('reference');
         $invoice->client_id = $request->input('client');
         $invoice->seller_id = $request->input('seller');
-        $invoice->state = StatusAction::BDEFAULT();
+        $invoice->state = InvoicesStatuses::BDEFAULT();
         $invoice->duedate = date("Y-m-d H:i:s", strtotime($invoice->created_at . "+ 30 days"));
         $invoice->save();
+
+        $product = Product::find($request->input('product'));
+        $invoice->products()->attach($product->id, [
+            'quantity' => $request->input('quantity'),
+            'unit_value' => $product->price,
+            'total_value' => $request->input('quantity') * $product->price,
+         ]);
+         $invoice->update();
+         
         return redirect()->route('invoice.edit', $invoice);
     }
 
@@ -65,7 +81,9 @@ class InvoiceController extends Controller
     public function edit(Invoice $invoice)
     {
         if (!$invoice->isPaid() && !$invoice->isPending()) {
-            return view('invoices.edit', compact('invoice'));
+            $clients = Client::getCachedClientList();
+            $sellers = Seller::getCachedSellerList();
+            return view('invoices.edit', compact('invoice', 'clients', 'sellers'));
         } else {
             return redirect()->route('home')->withErrors('La factura no se puede editar');
         }
@@ -94,7 +112,6 @@ class InvoiceController extends Controller
                 'invoice' => $invoice->id,
                 'ipAddress' => $request->ip(),
                 'userAgent' => $request->header('User-Agent'),
-                'date' => date('c'),
                 ]);
             return redirect()->route('home')->withErrors('La factura no se puede editar');
         }
@@ -123,7 +140,6 @@ class InvoiceController extends Controller
             'invoice' => $invoice->id,
             'ipAddress' => $request->ip(),
             'userAgent' => $request->header('User-Agent'),
-            'date' => date('c'),
             ]);
             return redirect()->route('home')->with('success', 'La factura fue anulada');
         } catch (Exception $e) {
@@ -131,7 +147,6 @@ class InvoiceController extends Controller
                 'invoice' => $invoice->id,
                 'ipAddress' => $request->ip(),
                 'userAgent' => $request->header('User-Agent'),
-                'date' => date('c'),
                 ]);
             return redirect()->route('home')->withErrors($e);
         }
@@ -150,7 +165,6 @@ class InvoiceController extends Controller
             'invoice' => $invoice->id,
             'ipAddress' => $request->ip(),
             'userAgent' => $request->header('User-Agent'),
-            'date' => date('c'),
             ]);
             return redirect()->route('home')->with('success', 'La factura ya no está anulada');
     }

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Actions;
+namespace App\Constans;
 
 use MyCLabs\Enum\Enum;
 
-class StatusAction extends Enum
+class InvoicesStatuses extends Enum
 {
     const OK = '111';
     const FAILED = '001';
