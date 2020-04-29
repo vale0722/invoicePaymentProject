@@ -7,8 +7,8 @@ use App\Seller;
 use App\Invoice;
 use App\Product;
 use Illuminate\Http\Request;
+use App\Events\LogInvoiceEvent;
 use App\Constans\InvoicesStatuses;
-use Illuminate\Support\Facades\Log;
 use App\Http\Requests\Invoice\InvoiceStoreRequest;
 use App\Http\Requests\Invoice\InvoiceUpdateRequest;
 use App\Http\Requests\Invoice\InvoiceAnnulateRequest;
@@ -20,7 +20,6 @@ class InvoiceController extends Controller
      */
     public function index()
     {
-        
         $invoices = Invoice::all();
         return view('invoices.index', compact('invoices'));
     }
@@ -43,7 +42,11 @@ class InvoiceController extends Controller
         $clients = Client::getCachedClientList();
         $sellers = Seller::getCachedSellerList();
         $products = Product::getCachedProductsList();
-        return view('invoices.create', compact('clients', 'sellers', 'products'));
+        return view('invoices.create', compact(
+            'clients',
+            'sellers',
+            'products'
+        ));
     }
 
     /**
@@ -59,7 +62,10 @@ class InvoiceController extends Controller
         $invoice->client_id = $request->input('client');
         $invoice->seller_id = $request->input('seller');
         $invoice->state = InvoicesStatuses::BDEFAULT();
-        $invoice->duedate = date("Y-m-d H:i:s", strtotime($invoice->created_at . "+ 30 days"));
+        $invoice->duedate = date(
+            "Y-m-d H:i:s",
+            strtotime($invoice->created_at . "+ 30 days")
+        );
         $invoice->save();
 
         $product = Product::find($request->input('product'));
@@ -68,7 +74,7 @@ class InvoiceController extends Controller
             'unit_value' => $product->price,
             'total_value' => $request->input('quantity') * $product->price,
          ]);
-         $invoice->update();
+        $invoice->update();
          
         return redirect()->route('invoice.edit', $invoice);
     }
@@ -83,9 +89,14 @@ class InvoiceController extends Controller
         if (!$invoice->isPaid() && !$invoice->isPending()) {
             $clients = Client::getCachedClientList();
             $sellers = Seller::getCachedSellerList();
-            return view('invoices.edit', compact('invoice', 'clients', 'sellers'));
+            return view('invoices.edit', compact(
+                'invoice',
+                'clients',
+                'sellers'
+            ));
         } else {
-            return redirect()->route('home')->withErrors('La factura no se puede editar');
+            return redirect()->route('home')
+                ->withErrors('La factura no se puede editar');
         }
     }
 
@@ -96,32 +107,38 @@ class InvoiceController extends Controller
      */
     public function update(Invoice $invoice, InvoiceUpdateRequest $request)
     {
-        if (!$invoice->isPaid() && !$invoice->isPending() && !$invoice->isAnnulated()) {
+        if (!$invoice->isPaid()
+            && !$invoice->isPending()
+            && !$invoice->isAnnulated()) {
             $invoice->title = $request->input('title');
             $invoice->reference = $request->input('reference');
+
             if ($request->input('stateReceipt') == '1') {
                 $now = new \DateTime();
                 $invoice->receipt_date = $now->format('Y-m-d H:i:s');
             } else {
                 $invoice->receipt_date = null;
             }
+
             $invoice->update();
             return redirect()->route('home');
-        } else {
-            Log::alert('Tried to update an invoice with a pending or already paid process', [
-                'invoice' => $invoice->id,
-                'ipAddress' => $request->ip(),
-                'userAgent' => $request->header('User-Agent'),
-                ]);
-            return redirect()->route('home')->withErrors('La factura no se puede editar');
         }
+        event(new LogInvoiceEvent(
+            'Tried to update an invoice with a pending or already paid process',
+            $invoice->id,
+            $request->ip(),
+            $request->header('User-Agent'),
+            'info'
+        ));
+        return redirect()->route('home')->withErrors('La factura no se puede editar');
     }
 
     /**
      * View for annulate an invoice
      * @param Invoice $invoice
      */
-    public function annulateView(Invoice $invoice){
+    public function annulateView(Invoice $invoice)
+    {
         return view('invoices.annulate', compact('invoice'));
     }
 
@@ -136,18 +153,22 @@ class InvoiceController extends Controller
         try {
             $invoice->annulate = $request->input('reason');
             $invoice->update();
-            Log::alert('An invoice was annulated', [
-            'invoice' => $invoice->id,
-            'ipAddress' => $request->ip(),
-            'userAgent' => $request->header('User-Agent'),
-            ]);
+            event(new LogInvoiceEvent(
+                'An invoice was annulated',
+                $invoice->id,
+                $request->ip(),
+                $request->header('User-Agent'),
+                'info'
+            ));
             return redirect()->route('home')->with('success', 'La factura fue anulada');
         } catch (Exception $e) {
-            Log::error($e, [
-                'invoice' => $invoice->id,
-                'ipAddress' => $request->ip(),
-                'userAgent' => $request->header('User-Agent'),
-                ]);
+            event(new LogInvoiceEvent(
+                $e,
+                $invoice->id,
+                $request->ip(),
+                $request->header('User-Agent'),
+                'error'
+            ));
             return redirect()->route('home')->withErrors($e);
         }
     }
@@ -161,11 +182,13 @@ class InvoiceController extends Controller
     {
         $invoice->annulate = null;
         $invoice->update();
-        Log::alert('The Annulate of an invoice was removed', [
-            'invoice' => $invoice->id,
-            'ipAddress' => $request->ip(),
-            'userAgent' => $request->header('User-Agent'),
-            ]);
-            return redirect()->route('home')->with('success', 'La factura ya no está anulada');
+        event(new LogInvoiceEvent(
+            'The Annulate of an invoice was removed',
+            $invoice->id,
+            $request->ip(),
+            $request->header('User-Agent'),
+            'info'
+        ));
+        return redirect()->route('home')->with('success', 'La factura ya no está anulada');
     }
 }

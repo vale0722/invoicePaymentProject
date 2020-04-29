@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Payment;
 use App\invoice;
 use Illuminate\Http\Request;
+use App\Events\LogInvoiceEvent;
+use App\Events\LogPaymentEvent;
 use Dnetix\Redirection\PlacetoPay;
 use Illuminate\Support\Facades\Log;
 
@@ -17,11 +19,13 @@ class PaymentController extends Controller
     */
     public function index(Request $request, Invoice $invoice)
     {
-        Log::info('Someone has Logged in to view payment history', [
-            'invoice' => $invoice->id,
-            'ipAddress' => $request->ip(),
-            'userAgent' => $request->header('User-Agent'),
-            ]);
+        event(new LogInvoiceEvent(
+            'Someone has Logged in to view payment history',
+            $invoice->id,
+            $request->ip(),
+            $request->header('User-Agent'),
+            'info'
+        ));
         return view("invoices.payments.index", compact('invoice'));
     }
 
@@ -35,21 +39,23 @@ class PaymentController extends Controller
     public function store(Request $request, Invoice $invoice, PlacetoPay $placetopay)
     {
         if ($invoice->total == 0) {
-            Log::info('Tried to pay an invoice without products', [
-                'invoice' => $invoice->id,
-                'ipAddress' => $request->ip(),
-                'userAgent' => $request->header('User-Agent'),
-                'date' => date('c'),
-                ]);
+            event(new LogInvoiceEvent(
+                'Tried to pay an invoice without products',
+                $invoice->id,
+                $request->ip(),
+                $request->header('User-Agent'),
+                'info'
+            ));
             return redirect()->route('invoice.show', $invoice);
         }
         if ($invoice->isPaid() || $invoice->isAnnulated()) {
-            Log::info('Tried to pay an paid or annuled invoice', [
-                'invoice' => $invoice->id,
-                'ipAddress' => $request->ip(),
-                'userAgent' => $request->header('User-Agent'),
-                'date' => date('c'),
-                ]);
+            event(new LogInvoiceEvent(
+                'Tried to pay an paid or annuled invoice',
+                $invoice->id,
+                $request->ip(),
+                $request->header('User-Agent'),
+                'info'
+            ));
             return redirect()->route('invoice.show', $invoice);
         }
 
@@ -85,12 +91,15 @@ class PaymentController extends Controller
             $this->updateData($request, $response, $payment, $invoice);
             return redirect($response->processUrl());
         }
-        Log::info($response->status()->message(), [
-                'invoice' => $invoice->id,
-                'payment' => $payment->id,
-                'ipAddress' => $request->ip(),
-                'userAgent' => $request->header('User-Agent'),
-                ]);
+
+        event(new LogPaymentEvent(
+            $response->status()->message(),
+            $payment->id,
+            $invoice->id,
+            $request->ip(),
+            $request->header('User-Agent'),
+            'info'
+        ));
         return redirect()->route('invoice.show', $invoice)
             ->withError($response->status()->message());
     }
@@ -127,12 +136,15 @@ class PaymentController extends Controller
             }
         }
         $invoice->update();
-        Log::alert('Payment attempt was updated', [
-            'invoice' => $payment->invoice->id,
-            'payment' => $payment->id,
-            'ipAddress' => $request->ip(),
-            'userAgent' => $request->header('User-Agent'),
-            ]);
+
+        event(new LogPaymentEvent(
+            'Payment attempt was updated',
+            $payment->id,
+            $invoice->id,
+            $request->ip(),
+            $request->header('User-Agent'),
+            'info'
+        ));
         return view(
             "invoices.payments.index",
             compact('invoice')
@@ -148,27 +160,39 @@ class PaymentController extends Controller
     public function show(Request $request, Payment $payment, PlacetoPay $placetopay)
     {
         if (!$payment->isPending() || $payment->invoice->isAnnulated) {
-            Log::info('El intento de pago no está en proceso o la factura está anulada', [
-                'invoice' => $payment->invoice->id,
-                'payment' => $payment->id,
-                'ipAddress' => $request->ip(),
-                'userAgent' => $request->header('User-Agent'),
-                ]);
-            return redirect()->route('payment.index', $payment->invoice)
-                ->withError('El intento de pago no está en proceso o la factura está anulada');
+            event(new LogPaymentEvent(
+                'Someone tried to proceed with a no-process payment or an overdue invoice',
+                $payment->id,
+                $invoice->id,
+                $request->ip(),
+                $request->header('User-Agent'),
+                'alert'
+            ));
+            return redirect()->route('payment.index', $payment->invoice);
         }
+
         $requestPayment = $placetopay->query($payment->request_id);
         $response = $placetopay->request($requestPayment->request);
+
         if ($response->isSuccessful()) {
-            $this->updateData($request, $response, $payment, $payment->invoice);
+            $this->updateData(
+                $request,
+                $response,
+                $payment,
+                $payment->invoice
+            );
             return redirect($response->processUrl());
         }
-        Log::alert($response->status()->message(), [
-                    'invoice' => $payment->invoice->id,
-                    'payment' => $payment->id,
-                    'ipAddress' => $request->ip(),
-                    'userAgent' => $request->header('User-Agent'),
-                    ]);
+
+        event(new LogPaymentEvent(
+            $response->status()->message(),
+            $payment->id,
+            $invoice->id,
+            $request->ip(),
+            $request->header('User-Agent'),
+            'info'
+        ));
+
         return redirect()->route('payment.index', $payment->invoice)
             ->withError($response->status()->message());
     }
@@ -192,11 +216,13 @@ class PaymentController extends Controller
         $payment->processUrl = $requestPayment->processUrl();
         $payment->update();
         $payment->invoice->update();
-        Log::info('PlacetoPay Redirect', [
-            'invoice' => $invoice->id,
-            'payment' => $payment->id,
-            'ipAddress' => $request->ip(),
-            'userAgent' => $request->header('User-Agent'),
-            ]);
+        event(new LogPaymentEvent(
+            'PlacetoPay Redirect',
+            $payment->id,
+            $invoice->id,
+            $request->ip(),
+            $request->header('User-Agent'),
+            'info'
+        ));
     }
 }
