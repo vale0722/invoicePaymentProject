@@ -6,24 +6,36 @@
             @if($errors->any())
             <div id="divErrors">
                 @foreach($errors->all() as $error)
-                <div class="alert alert-danger">
+                <div class="alert alert-danger alert-dismissible fade show" id="divErrors">
                     {{ $error }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 @endforeach
             </div>
             @endif
             @if(session()->has('success'))
-            <div class="alert alert-success" id="divSuccess">
-                {{session()->get('success')}}
+            <div class="alert alert-success alert-dismissible fade show" id="divSuccess">
+                {{ session()->get('success') }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             @endif
             <div class="title">
                 <h2 class="text-blue">
-                    Facturas Generadas <i class="fas fa-file-invoice-dollar"></i>
-                    <div class="text-right">
-                        <a href="{{ route('invoice.create') }}" class="btn btn-blue btn-raised btn-rab btn-round">
-                            <i class="fas fa-plus"></i> Crear Factura
-                        </a>
+                    <div class="row">
+                        <div class="col-6"> Facturas Generadas
+                             <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-right btn-group-sm">
+                                <a href="{{ route('invoice.create') }}" class="btn btn-blue">
+                                    <i class="fas fa-plus"></i> Crear Factura
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </h2>
             </div>
@@ -71,7 +83,7 @@
                                         @if(!$invoice->isPaid() && !$invoice->isPending() && !$invoice->isAnnulated())
                                         <div>
                                             <a href="{{ route('invoice.edit', $invoice)}}"
-                                                class=" btn button-transp text-warning">
+                                                class=" btn button-transp text-blue">
                                                 <i class="far fa-edit"></i>
                                             </a>
                                         </div>
@@ -81,13 +93,17 @@
                                                 <i class="fas fa-ban"></i>
                                             </a>
                                         </div>
-                                        @endif 
+                                        @endif
                                         @if($invoice->isAnnulated())
                                         <div>
-                                            <a href="{{ route('invoice.annulate.cancel', $invoice)}}"
-                                                class=" btn button-transp text-danger">
-                                                <i class="fas fa-undo"></i> Cancelar anulación
-                                            </a>
+                                            <form action="{{ route('invoice.annulate.cancel', $invoice)}}" method="post">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit"
+                                                        class=" btn button-transp text-danger">
+                                                    <i class="fas fa-undo"></i> Cancelar anulación
+                                                </button>
+                                            </form>
                                         </div>
                                         @endif
                                     </div>

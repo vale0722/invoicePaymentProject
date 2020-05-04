@@ -7,11 +7,18 @@ use App\Product;
 use Illuminate\Http\Request;
 use App\Http\Requests\Invoice\Product\StoreRequest;
 
+/**
+ * Class InvoiceProductController
+ * @package App\Http\Controllers
+ */
 class InvoiceProductController extends Controller
 {
 
     /**
     * Create view of an invoice product
+     *
+     * @param Invoice $invoice
+     * @return View
     */
     public function create(Invoice $invoice)
     {
@@ -22,7 +29,9 @@ class InvoiceProductController extends Controller
     /**
      * Store an invoice product
      *
-     * @param App\Http\Requests\Invoice\InvoiceStoreRequest $request
+     * @param StoreRequest $request
+     * @param Invoice $invoice
+     * @return RedirectResponse
      */
     public function store(StoreRequest $request, Invoice $invoice)
     {

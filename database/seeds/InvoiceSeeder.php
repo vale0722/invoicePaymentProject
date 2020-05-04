@@ -15,13 +15,9 @@ class InvoiceSeeder extends Seeder
      */
     public function run()
     {
-        $client = factory(Client::class)->create();
-        $seller = factory(Seller::class)->create();
         for ($i = 1; $i < 6; $i++) {
             $invoice = factory(Invoice::class)->create([
                 'title' => 'Factura ' . $i,
-                'client_id' => $client->id,
-                'seller_id' => $seller->id,
             ]);
             for ($j = 1; $j < 3; $j++) {
                 $product = factory(Product::class)->create();
@@ -32,13 +28,6 @@ class InvoiceSeeder extends Seeder
                     'unit_value' => $product->price,
                 ]);
             }
-            $invoice->update(
-                [
-                'subtotal' => $invoice->subtotal,
-                'vat' => $invoice->vat,
-                'total'=> $invoice->total
-                ]
-            );
             $invoice->update();
         }
     }

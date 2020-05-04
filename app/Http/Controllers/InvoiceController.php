@@ -6,13 +6,18 @@ use App\Client;
 use App\Seller;
 use App\Invoice;
 use App\Product;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use App\Events\LogInvoiceEvent;
-use App\Constans\InvoicesStatuses;
 use App\Http\Requests\Invoice\InvoiceStoreRequest;
 use App\Http\Requests\Invoice\InvoiceUpdateRequest;
 use App\Http\Requests\Invoice\InvoiceAnnulateRequest;
+use Illuminate\View\View;
 
+/**
+ * Class InvoiceController
+ * @package App\Http\Controllers
+ */
 class InvoiceController extends Controller
 {
     /**
@@ -20,14 +25,15 @@ class InvoiceController extends Controller
      */
     public function index()
     {
-        $invoices = Invoice::all();
+        $invoices = Invoice::all()->sortByDesc('id');
         return view('invoices.index', compact('invoices'));
     }
 
     /**
      * Displays a specific invoice
      *
-     * @param App\Invoice  $invoice
+     * @param Invoice $invoice
+     * @return View
      */
     public function show(Invoice $invoice)
     {
@@ -36,6 +42,8 @@ class InvoiceController extends Controller
 
     /**
     * Create view of an invoice
+    *
+    * @return View
     */
     public function create()
     {
@@ -52,16 +60,17 @@ class InvoiceController extends Controller
     /**
      * Store an invoice
      *
-     * @param App\Http\Requests\Invoice\InvoiceStoreRequest $request
+     * @param InvoiceStoreRequest $request
+     * @param Invoice $invoice
+     * @return RedirectResponse
      */
-    public function store(InvoiceStoreRequest $request)
+    public function store(InvoiceStoreRequest $request, Invoice $invoice)
     {
-        $invoice = new Invoice();
         $invoice->title = $request->input('title');
         $invoice->reference = $request->input('reference');
         $invoice->client_id = $request->input('client');
         $invoice->seller_id = $request->input('seller');
-        $invoice->state = InvoicesStatuses::BDEFAULT();
+        $invoice->setStatus('UNPAID');
         $invoice->duedate = date(
             "Y-m-d H:i:s",
             strtotime($invoice->created_at . "+ 30 days")
@@ -75,14 +84,16 @@ class InvoiceController extends Controller
             'total_value' => $request->input('quantity') * $product->price,
          ]);
         $invoice->update();
-         
+
         return redirect()->route('invoice.edit', $invoice);
     }
 
     /**
      * Edit view of an invoice
      *
-     * @param App\Invoice $invoice
+     * @param Invoice $invoice
+     *
+     * @return view
      */
     public function edit(Invoice $invoice)
     {
@@ -94,16 +105,18 @@ class InvoiceController extends Controller
                 'clients',
                 'sellers'
             ));
-        } else {
-            return redirect()->route('home')
-                ->withErrors('La factura no se puede editar');
         }
+        return redirect()->route('home')
+            ->withErrors('La factura no se puede editar');
     }
 
     /**
      * Update an invoice
      *
-     * @param App\Invoice $invoice
+     * @param Invoice $invoice
+     * @param InvoiceUpdateRequest $request
+     *
+     * @return RedirectResponse
      */
     public function update(Invoice $invoice, InvoiceUpdateRequest $request)
     {
@@ -123,6 +136,7 @@ class InvoiceController extends Controller
             $invoice->update();
             return redirect()->route('home');
         }
+
         event(new LogInvoiceEvent(
             'Tried to update an invoice with a pending or already paid process',
             $invoice->id,
@@ -130,12 +144,14 @@ class InvoiceController extends Controller
             $request->header('User-Agent'),
             'info'
         ));
+
         return redirect()->route('home')->withErrors('La factura no se puede editar');
     }
 
     /**
      * View for annulate an invoice
      * @param Invoice $invoice
+     * @return View
      */
     public function annulateView(Invoice $invoice)
     {
@@ -145,8 +161,9 @@ class InvoiceController extends Controller
     /**
      * Cancels an invoice
      *
-     * @param Request $request
+     * @param InvoiceAnnulateRequest $request
      * @param Invoice $invoice
+     * @return RedirectResponse
      */
     public function annulate(InvoiceAnnulateRequest $request, Invoice $invoice)
     {
@@ -161,7 +178,7 @@ class InvoiceController extends Controller
                 'info'
             ));
             return redirect()->route('home')->with('success', 'La factura fue anulada');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             event(new LogInvoiceEvent(
                 $e,
                 $invoice->id,

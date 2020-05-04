@@ -3,29 +3,34 @@
 <div class="main main-raised">
     <div class="section">
         <div class="container">
-            @if($errors->any())
-            <div id="divErrors">
-                @foreach($errors->all() as $error)
-                <div class="alert alert-danger">
-                    {{ $error }}
-                </div>
-                @endforeach
-            </div>
-            @endif
-            <a href="{{ route('home') }}" class="btn btn-blue btn-raised btn-rab btn-round">
-                <i class="fas fa-undo"></i>
-            </a>
             <div class="title">
-                <h2 class="text-danger">
+                <a href="{{ route('home') }}" class="btn btn-transparent h2">
+                    <i class="fas fa-undo"></i>
+                </a>
+                <h2 class="text-danger text-center">
                     <i class="fas fa-ban"></i> Anular {{ $invoice->title . ' REF. ' . $invoice->reference}}
                 </h2>
             </div>
             <p class="text-center"> ¿Desea anular la factura?</p>
             <br>
-            <form action="{{ route('invoice.annulate', $invoice) }}" class="text-center" method="POST">
+            <form action="{{ route('invoice.annulate', $invoice) }}"
+                class="text-center was-validated"
+                method="POST" novalidate>
                 @csrf
-                <label for="reason">Motivo: </label>
-                <input type="text" class="form-control" id="reason" name="reason" required>
+                @method('PATCH')
+                <div class="form-row">
+                    <label for="reason">Motivo: </label>
+                    <input type="text" class="form-control" id="reason"
+                        name="reason" minlength="1" required>
+                    <div class="valid-feedback">
+                        Perfecto!
+                    </div>
+                    <div class="invalid-feedback">
+                        @error('reason')
+                            {{ $message }}
+                        @enderror
+                    </div>
+                </div>
                 <br>
                 <button type="submit" class="btn btn-success text-center form-control"> confirmar </button>
             </form>

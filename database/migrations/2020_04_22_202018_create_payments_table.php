@@ -16,7 +16,7 @@ class CreatePaymentsTable extends Migration
         Schema::create('payments', function (Blueprint $table) {
             $table->Increments('id');
             $table->unsignedInteger('invoice_id');
-            $table->string('status')->nullable();
+            $table->string('status')->default(\App\Constans\PaymentsStatuses::PENDING);
             $table->string('reason')->nullable();
             $table->string('message')->nullable();
             $table->string('request_id')->nullable()->unique();

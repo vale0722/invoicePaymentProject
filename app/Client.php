@@ -4,28 +4,30 @@ namespace App;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Client extends Model
 {
-    public function invoices()
+    public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
     }
 
-    public function getFullNameAttribute()
+    public function getFullNameAttribute(): String
     {
         return $this->name . ' ' . $this->surname;
     }
 
-    public function getFullDocumentAttribute()
+    public function getFullDocumentAttribute(): String
     {
-        return $this->documentType . '. ' . $this->document;
+        return $this->document_type . '. ' . $this->document;
     }
 
-    public static function getCachedClientList()
+    public static function getCachedClientList(): Collection
     {
-        return Cache::remember('clients.enabled', 600, function () {
-            return Client::get();
+        return Cache::remember('clients', 600, function () {
+            return Client::all();
         });
     }
 }

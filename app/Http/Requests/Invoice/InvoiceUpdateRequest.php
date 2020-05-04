@@ -33,26 +33,12 @@ class InvoiceUpdateRequest extends FormRequest
         ];
     }
 
-     /**
-     * Get the custom messages for validator errors
-     *
-     * @return array
-     */
-    public function customValidationMessages()
-    {
-        return [
-            'required' => "El :attribute de la factura es un campo obligadorio",
-            'reference.unique' => "La :attribute de la factura ya exíste",
-            'exists' => 'El :attribute no exíste'
-        ];
-    }
-    
     /**
     * Get the custom attributes for validator errors
     *
     * @return array
     */
-    public function customValidationAttributes()
+    public function attributes()
     {
         return [
             'reference' => "Referencia",

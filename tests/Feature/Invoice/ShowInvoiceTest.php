@@ -13,14 +13,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 class ShowInvoiceTest extends TestCase
 {
     use RefreshDatabase;
-    
+
     /**
      * @test
      */
     public function YouCanSeeAnInvoice()
     {
-        factory(Client::class)->create();
-        factory(Seller::class)->create();
         $invoice = factory(Invoice::class)->create();
         $response = $this->get(route('invoice.show', $invoice));
         $response->assertSuccessful();
@@ -32,8 +30,6 @@ class ShowInvoiceTest extends TestCase
      */
     public function YouCanSeeDetailsOfAnInvoice()
     {
-        factory(Client::class)->create();
-        factory(Seller::class)->create();
         $invoice = factory(Invoice::class)->create();
         $response = $this->get(route('invoice.show', $invoice));
         $response->assertSuccessful();
@@ -48,8 +44,6 @@ class ShowInvoiceTest extends TestCase
      */
     public function YouCanSeeTheProductsOfAnInvoice()
     {
-        factory(Client::class)->create();
-        factory(Seller::class)->create();
         $invoice = factory(Invoice::class)->create();
         for ($j = 1; $j < 3; $j++) {
             $product = factory(Product::class)->create();

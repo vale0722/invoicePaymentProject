@@ -18,8 +18,8 @@
                 @endforeach
             </div>
             @endif
-            <a class="btn btn-primary" href="{{ route('payment.index', $invoice) }}"><i class="far fa-eye"></i> Ver
-                intentos de pago
+            <a class="btn btn-primary" href="#history"><i class="far fa-eye"></i> Ver
+                Intentos de pago
             </a>
             @if(!$invoice->isPaid() && !$invoice->isAnnulated())
             <button type="button" class="btn btn-success" data-toggle="modal" data-target="#create">
@@ -133,6 +133,71 @@
                     <p> {{ '$'. number_format($invoice->subtotal) }}</p>
                     <p> {{'$'. number_format($invoice->vat) }}</p>
                     <p> {{'$'. number_format($invoice->total) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="section" id="history" name="history">
+        <div class="container">
+            <div class="title">
+                <h2 class="text-blue">
+                    Histórico de Pagos <i class="fas fa-file-invoice-dollar"></i>
+                </h2>
+            </div>
+            <div class="card">
+                <div class="card-body table-invoices">
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th scope="col">Reference</th>
+                            <th scope="col">Monto</th>
+                            <th scope="col">Código de estado</th>
+                            <th scope="col">Mensaje</th>
+                            <th scope="col">Fecha de actualización</th>
+                            <th scope="col"></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @forelse($invoice->payments as $payment)
+                            <tr>
+                                <th>{{ $invoice->reference }}</th>
+                                <th>{{ '$' . number_format($invoice->total) }}</th>
+                                <th>
+                                    @if(\App\Constans\PaymentsStatuses::FAILED === $payment->reason)
+                                        Ha fallado
+                                    @elseif(\App\Constans\PaymentsStatuses::OK === $payment->reason)
+                                        OK
+                                    @elseif(\App\Constans\PaymentsStatuses::APPROVED === $payment->reason)
+                                        Aprobado
+                                    @elseif(\App\Constans\PaymentsStatuses::APPROVED_PARTIAL === $payment->reason)
+                                        Parcialmente Aprobado
+                                    @elseif(\App\Constans\PaymentsStatuses::PARTIAL_EXPIRED === $payment->reason)
+                                        Pago Parcial Vencido
+                                    @elseif(\App\Constans\PaymentsStatuses::REJECTED === $payment->reason)
+                                        Denegado
+                                    @elseif(\App\Constans\PaymentsStatuses::PENDING === $payment->reason)
+                                        Pendiente
+                                    @elseif(\App\Constans\PaymentsStatuses::PENDING_VALIDATION === $payment->reason)
+                                        Pendiente de Validación
+                                    @else
+                                        ---
+                                    @endif
+                                </th>
+                                <th>{{ $payment->message }}</th>
+                                <th>{{ $payment->updated_at }}</th>
+                                <th>
+                                    @if($payment->isPending() && !$invoice->isAnnulated())
+                                        <a href="{{ route('payment.show', $payment)}}" class="text-success">
+                                            <i class="fas fa-running"></i> Continuar</a></th>
+                                @endif
+                            </tr>
+                        @empty
+                            <tr>
+                                <th colspan="8" class="text-center">NO HA REALIZADO NINGÚN INTENTO DE PAGO</th>
+                            </tr>
+                        @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

@@ -18,13 +18,13 @@ class CreateInvoiceProductTable extends Migration
             $table->unsignedInteger('invoice_id');
             $table->unsignedInteger('product_id');
             $table->integer('quantity');
-            $table->double('unit_value');
-            $table->double('total_value');
+            $table->double('unit_value', 18, 2);
+            $table->double('total_value', 18, 2);
             $table->timestamps();
 
             $table->foreign('invoice_id')->references('id')->on('invoices')->onDelete('cascade');
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
-            
+
         });
     }
 

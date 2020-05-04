@@ -2,12 +2,9 @@
 
 namespace Tests\Feature\Invoice;
 
-use App\Client;
-use App\Seller;
 use App\Invoice;
 use Tests\TestCase;
 use App\Constans\InvoicesStatuses;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class UpdateInvoiceTest extends TestCase
@@ -19,8 +16,6 @@ class UpdateInvoiceTest extends TestCase
      */
     public function canSeeEditInvoiceView()
     {
-        $client = factory(Client::class)->create();
-        $seller = factory(Seller::class)->create();
         $invoice = factory(Invoice::class)->create();
         $this->get(route('invoice.edit', $invoice))->assertViewIs('invoices.edit');
     }
@@ -30,8 +25,6 @@ class UpdateInvoiceTest extends TestCase
      */
     public function canEditANoAnnuledInvoice()
     {
-        $client = factory(Client::class)->create();
-        $seller = factory(Seller::class)->create();
         $invoice = factory(Invoice::class)->create();
         $this->put(route('invoice.update', $invoice), [
             'reference' => '#RTU',
@@ -45,17 +38,13 @@ class UpdateInvoiceTest extends TestCase
             'title' => 'Invoice test update'
         ]);
     }
-    
+
     /**
      * @test
      */
     public function canNotEditAnAnnuledInvoice()
     {
-        $client = factory(Client::class)->create();
-        $seller = factory(Seller::class)->create();
-        $invoice = factory(Invoice::class)->create();
-        $invoice->annulate = 'motivo x';
-        $invoice->update();
+        $invoice = factory(Invoice::class)->state('annulate')->create();
         $this->put(route('invoice.update', $invoice), [
             'reference' => '#RTU',
             'title' => 'Invoice test update',
@@ -73,11 +62,9 @@ class UpdateInvoiceTest extends TestCase
      */
     public function canNotEditAnPaidInvoice()
     {
-        $client = factory(Client::class)->create();
-        $seller = factory(Seller::class)->create();
-        $invoice = factory(Invoice::class)->create();
-        $invoice->state =  InvoicesStatuses::APPROVED();
-        $invoice->update();
+        $invoice = factory(Invoice::class)->create([
+            'status' => InvoicesStatuses::PAID,
+        ]);
         $this->put(route('invoice.update', $invoice), [
             'reference' => '#RTU',
             'title' => 'Invoice test update',
@@ -95,11 +82,9 @@ class UpdateInvoiceTest extends TestCase
      */
     public function canNotEditAnInvoiceInPaidProccess()
     {
-        $client = factory(Client::class)->create();
-        $seller = factory(Seller::class)->create();
-        $invoice = factory(Invoice::class)->create();
-        $invoice->state =  InvoicesStatuses::PENDING();
-        $invoice->update();
+        $invoice = factory(Invoice::class)->create([
+            'status' => InvoicesStatuses::PENDING,
+        ]);
         $this->put(route('invoice.update', $invoice), [
             'reference' => '#RTU',
             'title' => 'Invoice test update',

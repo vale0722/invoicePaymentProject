@@ -15,8 +15,10 @@
         "fzaninotto/faker": "^1.9",
         "laravel/framework": "^6.2",
         "laravel/tinker": "^2.0",
+        "laraveles/spanish": "^1.4",
         "myclabs/php-enum": "^1.7",
-        "rap2hpoutre/laravel-log-viewer": "^1.5"
+        "rap2hpoutre/laravel-log-viewer": "^1.5",
+      "ext-http": "*"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.3",

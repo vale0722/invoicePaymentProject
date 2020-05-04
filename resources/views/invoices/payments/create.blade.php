@@ -26,8 +26,20 @@
                             <div class="row"> {{$invoice->client->documentType.' '. $invoice->client->document}}</div>
                             <div class="row"> {{$invoice->client->email}}</div>
                             <div class="row"> {{$invoice->reference}}</div>
-                            <div class="row"> {{$invoice->state}} </div>
-                            <div class="row"> {{'$'. number_format($invoice->total) . ' COP'}} </div>
+                            <div class="row">
+                                @if($invoice->isPaid())
+                                <span class="badge badge-success">Pagada</span>
+                                @elseif($invoice->isAnnulated())
+                                <span class="badge badge-danger">Anulada</span>
+                                @elseif($invoice->isExpired())
+                                <span class="badge badge-danger">Vencida</span>
+                                @elseif($invoice->isPending())
+                                <span class="badge badge-warning">Pendiente</span>
+                                @else
+                                <span class="badge badge-secondary">No Pago</span>
+                                @endif
+                            </div>
+                        <div class="row"> {{'$'. number_format($invoice->total) . ' COP'}} </div>
                         </div>
                     </div>
                     <br>

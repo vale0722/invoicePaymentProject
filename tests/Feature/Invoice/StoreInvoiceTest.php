@@ -51,8 +51,6 @@ class StoreInvoiceTest extends TestCase
      */
     public function canCreateAnInvoiceProduct()
     {
-        $client = factory(Client::class)->create();
-        $seller = factory(Seller::class)->create();
         $invoice = factory(Invoice::class)->create();
         $product = factory(Product::class)->create();
         $this->post(route('invoice.product.store', $invoice), [
