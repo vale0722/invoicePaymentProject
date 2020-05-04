@@ -2,30 +2,32 @@
 
 namespace App;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Seller extends Model
 {
-    public function invoices()
+    public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
     }
 
-    public function getFullNameAttribute()
+    public function getFullNameAttribute(): string
     {
         return $this->name . ' ' . $this->surname;
     }
 
-    public function getFullDocumentAttribute()
+    public function getFullDocumentAttribute(): string
     {
-        return $this->documentType . '. ' . $this->document;
+        return $this->document_type . '. ' . $this->document;
     }
 
-    public static function getCachedSellerList()
+    public static function getCachedSellerList(): Collection
     {
-        return Cache::remember('sellers.enabled', 600, function () {
-            return Seller::get();
+        return Cache::remember('sellers', 600, function () {
+            return Seller::all();
         });
     }
 }

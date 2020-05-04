@@ -3,19 +3,26 @@
 namespace App\Http\Controllers;
 
 use App\Payment;
-use App\invoice;
+use App\Invoice;
+use http\Env\Response;
+use Illuminate\View\View;
 use Illuminate\Http\Request;
 use App\Events\LogInvoiceEvent;
 use App\Events\LogPaymentEvent;
 use Dnetix\Redirection\PlacetoPay;
-use Illuminate\Support\Facades\Log;
+use Dnetix\Redirection\Exceptions\PlacetoPayException;
 
+/**
+ * Class PaymentController
+ * @package App\Http\Controllers
+ */
 class PaymentController extends Controller
 {
     /**
     * Display the payment history.
-    *
-    * @return \Illuminate\Http\Response
+    * @param Invoice $invoice
+     * @param Request $request
+    * @return Response
     */
     public function index(Request $request, Invoice $invoice)
     {
@@ -26,16 +33,18 @@ class PaymentController extends Controller
             $request->header('User-Agent'),
             'info'
         ));
-        return view("invoices.payments.index", compact('invoice'));
+        return view("invoices.show", compact('invoice'));
     }
 
     /**
-    * Store a newly created resource in storage.
-    *
-    * @param  \Dnetix\Redirection\PlacetoPay $placetopay
-    * @param  \App\Invoice  $invoice
-    * @return \Illuminate\Http\Response
-    */
+     * Store a newly created resource in storage.
+     *
+     * @param Request $request
+     * @param PlacetoPay $placetopay
+     * @param Invoice $invoice
+     * @return Response
+     * @throws PlacetoPayException
+     */
     public function store(Request $request, Invoice $invoice, PlacetoPay $placetopay)
     {
         if ($invoice->total == 0) {
@@ -48,6 +57,7 @@ class PaymentController extends Controller
             ));
             return redirect()->route('invoice.show', $invoice);
         }
+
         if ($invoice->isPaid() || $invoice->isAnnulated()) {
             event(new LogInvoiceEvent(
                 'Tried to pay an paid or annuled invoice',
@@ -65,7 +75,7 @@ class PaymentController extends Controller
                 'name' => $invoice->client->name,
                 'surname' => $invoice->client->surname,
                 'email' => $invoice->client->email,
-                'documentType' => $invoice->client->documentType,
+                'documentType' => $invoice->client->document_type,
                 'document' => $invoice->client->document,
                 'mobile' => $invoice->client->mobile,
                 'address' => [
@@ -88,7 +98,7 @@ class PaymentController extends Controller
 
         $response = $placetopay->request($requestPayment);
         if ($response->isSuccessful()) {
-            $this->updateData($request, $response, $payment, $invoice);
+            $this->updateData($request, $response, $payment);
             return redirect($response->processUrl());
         }
 
@@ -107,9 +117,10 @@ class PaymentController extends Controller
     /**
      * Update invoice status
      *
-     * @param  \Dnetix\Redirection\PlacetoPay $placetopay
-     * @param  \App\Payment  $payment
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @param  PlacetoPay $placetopay
+     * @param  Payment  $payment
+     * @return View
      */
     public function update(Request $request, Payment $payment, PlacetoPay $placetopay)
     {
@@ -120,7 +131,7 @@ class PaymentController extends Controller
         $payment->update();
 
         $invoice = $payment->invoice;
-        $invoice->state = $payment->reason;
+        $invoice->setStatus($payment->reason);
         if ($response->isSuccessful()) {
             if ($response->status()->isApproved()) {
                 $date = date(
@@ -146,7 +157,7 @@ class PaymentController extends Controller
             'info'
         ));
         return view(
-            "invoices.payments.index",
+            "invoices.show",
             compact('invoice')
         )->with('success', 'Proceso finalizado');
     }
@@ -154,64 +165,58 @@ class PaymentController extends Controller
     /**
      * continue paying an invoice
      *
+     * @param Request $request
      * @param Payment $payment
      * @param PlacetoPay $placetopay
+     * @return  Response
      */
     public function show(Request $request, Payment $payment, PlacetoPay $placetopay)
     {
-        if (!$payment->isPending() || $payment->invoice->isAnnulated) {
+        if (!$payment->isPending() || $payment->isApproved() || $payment->invoice->isAnnulated()) {
             event(new LogPaymentEvent(
                 'Someone tried to proceed with a no-process payment or an overdue invoice',
                 $payment->id,
-                $invoice->id,
+                $payment->invoice->id,
                 $request->ip(),
                 $request->header('User-Agent'),
                 'alert'
             ));
-            return redirect()->route('payment.index', $payment->invoice);
+            return redirect()->route('invoice.show', $payment->invoice);
         }
 
-        $requestPayment = $placetopay->query($payment->request_id);
-        $response = $placetopay->request($requestPayment->request);
+        $response = $placetopay->query($payment->request_id);
 
         if ($response->isSuccessful()) {
-            $this->updateData(
-                $request,
-                $response,
-                $payment,
-                $payment->invoice
-            );
-            return redirect($response->processUrl());
+
+            return redirect($payment->processUrl);
         }
 
         event(new LogPaymentEvent(
             $response->status()->message(),
             $payment->id,
-            $invoice->id,
+            $payment->invoice->id,
             $request->ip(),
             $request->header('User-Agent'),
             'info'
         ));
 
-        return redirect()->route('payment.index', $payment->invoice)
+        return redirect()->route('invoice.show', $payment->invoice)
             ->withError($response->status()->message());
     }
 
     /**
      * Before redirection with placetopay,
      * data update
-     *
+     * @param $request
      * @param $requestPayment
      * @param Payment $payment
-     * @param Invoice $invoice
      */
-    private function updateData($request, $requestPayment, Payment $payment, Invoice $invoice)
+    private function updateData($request, $requestPayment, Payment $payment)
     {
         $payment = Payment::where('id', $payment->id)->first();
-        $payment->status = $requestPayment->status()->status();
         $payment->setReason($requestPayment->status()->status());
         $payment->message = $requestPayment->status()->message();
-        $payment->invoice->state = $payment->reason;
+        $payment->invoice->setStatus($payment->reason);
         $payment->request_id = $requestPayment->requestId();
         $payment->processUrl = $requestPayment->processUrl();
         $payment->update();
@@ -219,7 +224,7 @@ class PaymentController extends Controller
         event(new LogPaymentEvent(
             'PlacetoPay Redirect',
             $payment->id,
-            $invoice->id,
+            $payment->invoice->id,
             $request->ip(),
             $request->header('User-Agent'),
             'info'

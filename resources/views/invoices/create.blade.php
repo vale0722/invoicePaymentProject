@@ -3,39 +3,49 @@
 <div class="main main-raised">
     <div class="section">
         <div class="container">
-            <a href="{{ route('home') }}" class="btn btn-blue btn-raised btn-rab btn-round">
-                <i class="fas fa-undo"></i>
-            </a>
             <div class="title">
-                <h2 class="text-blue">
+                <a href="{{ route('home') }}" class="btn btn-transparent">
+                    <i class="fas fa-undo"></i>
+                </a>
+                <h2 class="text-blue text-center" >
                     <i class="fas fa-plus-circle"></i> Creación de facturas
                 </h2>
             </div>
-            @if($errors->any())
-            <div id="divErrors">
-                @foreach($errors->all() as $error)
-                <div class="alert alert-danger">
-                    {{ $error }}
-                </div>
-                @endforeach
-            </div>
-            @endif
-            <form action="{{ route('invoice.store') }}" method="POST">
+            <form action="{{ route('invoice.store') }}"   class="text-center was-validated"  method="POST">
                 @csrf
                 @include('invoices.form')
                 <div class="form-row">
                     <div class="form-group col-6">
                         <label for="quantity">Cantidad: </label>
-                        <input type="number" class="form-control" id="quantity" name="quantity" placeholder="0"
-                            value="{{ old('quantity') }}">
+                        <input type="number"
+                            pattern="^[0-9]+" min="1"
+                            class="form-control" id="quantity"
+                            name="quantity" placeholder="0"
+                            value="{{ old('quantity') }}" required>
+                        <div class="valid-feedback text-left">
+                            Perfecto!
+                        </div>
+                        <div class="invalid-feedback text-left">
+                            @error('quantity')
+                                {{ $message }}
+                            @enderror
+                        </div>
                     </div>
                     <div class="form-group col-6">
                         <label for="product">Producto: </label>
-                        <select name="product" id="product" class="form-control @error('product') is-invalid @enderror">
+                        <select name="product" id="product" class="form-control custom-select @error('product') is-invalid @enderror">
                             @foreach($products as $product)
                             <option value="{{ $product->id }}"> {{ $product->sku . ': ' . $product->name }} </option>
                             @endforeach
                         </select>
+                        <div class="valid-feedback text-left">
+                            Perfecto!
+                        </div>
+                        <div class="invalid-feedback text-left">
+                            @error('product')
+                                {{ $message }}
+                            @enderror
+                        </div>
                     </div>
                 </div>
                 <div class="form-group text-center">
