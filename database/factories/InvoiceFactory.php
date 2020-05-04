@@ -1,19 +1,23 @@
 <?php
-
+use App\Client;
+use App\Seller;
 use App\Invoice;
+use Carbon\Carbon;
 use Faker\Generator as Faker;
-use App\Constans\InvoicesStatuses;
+
+/** @var Factory $factory */
 
 $factory->define(Invoice::class, function (Faker $faker) {
-    $now = new \DateTime();
-    $now = $now->format('Y-m-d H:i:s');
+    $now = Carbon::now()->format('Y-m-d H:i:s');
     return [
         'title' => $faker->name,
-        'reference' => $faker->bothify('?###'),
-        'client_id' => 1,
-        'seller_id' => 1,
+        'client_id' => factory(Client::class)->create(),
+        'seller_id' => factory(Seller::class)->create(),
         'reference' => $faker->unique()->numerify('F####'),
-        'state' => InvoicesStatuses::BDEFAULT(),
-        'duedate' => date('Y-m-d H:i:s', strtotime('+ 30 days', strtotime($now))),
+        'duedate' => date('Y-m-d H:i:s',
+            strtotime('+ 30 days', strtotime($now))),
     ];
 });
+$factory->state(Invoice::class, 'annulate', [
+       'annulate' => 'motivo x',
+    ]);

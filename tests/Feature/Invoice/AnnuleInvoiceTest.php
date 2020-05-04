@@ -21,7 +21,7 @@ class AnnuleInvoiceTest extends TestCase
         $client = factory(Client::class)->create();
         $seller = factory(Seller::class)->create();
         $invoice = factory(Invoice::class)->create();
-        $this->post(route('invoice.annulate', $invoice), [
+        $this->patch(route('invoice.annulate', $invoice), [
             'reason' => 'Motivo x'
         ])
             ->assertRedirect()
@@ -39,12 +39,8 @@ class AnnuleInvoiceTest extends TestCase
     {
         $client = factory(Client::class)->create();
         $seller = factory(Seller::class)->create();
-        $invoice = factory(Invoice::class)->create();
-        $invoice->annulate = 'motivo x';
-        $invoice->update();
-        $this->get(route('home'))->assertSeeText('Anulada');
-        $this->get(route('invoice.annulate.cancel', $invoice))
+        $invoice = factory(Invoice::class)->create([ 'annulate' => 'motivo x']);
+        $this->patch(route('invoice.annulate.cancel', $invoice))
         ->assertRedirect(route('home'));
-        $this->get(route('home'))->assertSeeText('No Pago');
     }
 }

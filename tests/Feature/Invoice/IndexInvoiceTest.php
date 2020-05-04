@@ -26,8 +26,6 @@ class IndexInvoiceTest extends TestCase
      */
     public function atHomeYouCanSeeTheInvoicesList()
     {
-        factory(Client::class)->create();
-        factory(Seller::class)->create();
         factory(Invoice::class, 5)->create();
         $this->get(route('home'))->assertViewHas('invoices');
     }

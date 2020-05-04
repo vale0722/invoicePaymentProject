@@ -15,7 +15,7 @@ class CreateSellersTable extends Migration
     {
         Schema::create('sellers', function (Blueprint $table) {
             $table->Increments('id');
-            $table->string('documentType');
+            $table->string('document_type');
             $table->string('document')->unique();
             $table->string('name');
             $table->string('surname');
@@ -23,8 +23,9 @@ class CreateSellersTable extends Migration
             $table->string('country');
             $table->string('department');
             $table->string('city');
-            $table->string('address')->unique();
-            $table->string('mobile')->max('30');
+            $table->string('email')->unique();
+            $table->string('address');
+            $table->string('mobile', 30);
             $table->timestamps();
         });
     }

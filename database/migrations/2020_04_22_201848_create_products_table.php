@@ -18,7 +18,7 @@ class CreateProductsTable extends Migration
             $table->string('sku')->unique();
             $table->string('name');
             $table->string('category');
-            $table->double('price');
+            $table->double('price', 18,2);
             $table->timestamps();
         });
     }
