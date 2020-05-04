@@ -24,36 +24,21 @@ class InvoiceStoreRequest extends FormRequest
     public function rules()
     {
         return [
-            'reference' => 'required|unique:invoices',
+            'reference' => 'required|min:2|max:50|unique:invoices',
             'title' => 'required|min:3|max:100',
             'client' => 'required|numeric|exists:clients,id',
             'seller' => 'required|numeric|exists:sellers,id',
             'product' => 'required|exists:products,id',
-            'quantity' => 'required|min:1',
+            'quantity' => 'required|min:1|numeric',
         ];
     }
 
-    /**
-     * Get the custom messages for validator errors
-     *
-     * @return array
-     */
-    public function customValidationMessages()
-    {
-        return [
-            'required' => "El :attribute de la factura es un campo obligadorio",
-            'reference.unique' => "La :attribute de la factura ya exíste",
-            'exists' => 'El :attribute no exíste',
-            'between' => 'El :attribute debe tener como minimo :min caracteres'
-        ];
-    }
-    
     /**
     * Get the custom attributes for validator errors
     *
     * @return array
     */
-    public function customValidationAttributes()
+    public function attributes()
     {
         return [
             'reference' => "Referencia",

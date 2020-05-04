@@ -25,30 +25,16 @@ class StoreRequest extends FormRequest
     {
         return [
             'product' => 'required|exists:products,id',
-            'quantity' => 'required|min:1',
+            'quantity' => 'required|min:1|numeric',
         ];
     }
 
-    /**
-     * Get the custom messages for validator errors
-     *
-     * @return array
-     */
-    public function customValidationMessages()
-    {
-        return [
-            'required' => "El :attribute es un campo obligatorio",
-            'exists' => 'El :attribute no exíste',
-            'between' => 'El :attribute debe tener como minimo :min caracteres'
-        ];
-    }
-    
     /**
     * Get the custom attributes for validator errors
     *
     * @return array
     */
-    public function customValidationAttributes()
+    public function attributes()
     {
         return [
             'product' => "Producto",

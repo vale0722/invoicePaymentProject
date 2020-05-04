@@ -24,28 +24,16 @@ class InvoiceAnnulateRequest extends FormRequest
     public function rules()
     {
         return [
-            'reason' => 'required|min:3'
+            'reason' => 'required|min:3|max:250'
         ];
     }
 
-    /**
-     * Get the custom messages for validator errors
-     *
-     * @return array
-     */
-    public function customValidationMessages()
-    {
-        return [
-            'required' => "El :attribute es un campo obligadorio",
-        ];
-    }
-    
     /**
     * Get the custom attributes for validator errors
     *
     * @return array
     */
-    public function customValidationAttributes()
+    public function attributes()
     {
         return [
             'reason' => "Motivo",
